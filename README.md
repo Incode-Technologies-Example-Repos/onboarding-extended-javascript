@@ -74,9 +74,8 @@ Remember the Flow holds the backend counter part of the process, some configurat
 
 # Backend Server
 A backend server that will generate the url is needed for this sample,
-luckily for you we already have sample server for PHP, NodeJS, Python,
-PHP and Java and .NET, please reffer to our documentation on subject:
-[Quick Start Sample Server](https://developer.incode.com/docs/quick-start-servers)
+luckily for you we already have sample server NodeJS, please reffer to our documentation on subject:
+[Backend Sample Server](https://developer.incode.com/docs/code-samples-for-web-integrations#backend-sample-server)
 
 In order to simplfy development, this repo is configured to reverse
 proxy a local backend server (`http://localhost:3000`) in the `/api`
