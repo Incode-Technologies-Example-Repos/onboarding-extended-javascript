@@ -102,3 +102,6 @@ You can save the specific version needed under `/public` and change the `VITE_SD
 VITE_SDK_URL=/name-of-the-js-file.js
 ```
 
+# Author
+
+© Incode Technologies Inc. All rights reserved.
