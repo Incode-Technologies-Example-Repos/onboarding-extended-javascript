@@ -1,27 +1,12 @@
 
+import { startOnboardingSession, finishOnboardingSession } from './session'
+
 // Lets put all the variables needed for all modules in the global scope
-const tokenServerURL= import.meta.env.VITE_TOKEN_SERVER_URL;
 const localServerUrl= import.meta.env.VITE_LOCAL_SERVER_URL;
 
 let incode;
 let session;
 const container = document.getElementById("camera-container");
-
-async function startOnboardingSession() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const uniqueId = urlParams.get('uniqueId');
-  
-  let sessionStartUrl = `${tokenServerURL}/start`
-  if (uniqueId) sessionStartUrl +=`?uniqueId=${uniqueId}`;
-  
-  const response = await fetch(sessionStartUrl);
-  if (!response.ok) {
-    const sessionData = await response.json();
-    throw new Error(sessionData.error);
-  }
-  
-  return await response.json();
-}
 
 function showError(e=null) {
   container.innerHTML = "<h1>There was an error</h1>";
@@ -32,32 +17,33 @@ function renderRedirectToMobile(){
   if (incode.isDesktop()) {
     incode.renderRedirectToMobile(container, {
       onSuccess: () => {
-        finish();
+        showFinishScreen();
       },
       session: session,
       url: `${localServerUrl}?uniqueId=${session.uniqueId}`,
       // showSms: false, //uncomment if you want to remove the SMS feature
     });
   } else {
-    renderUserConsent();
+    saveDeviceData();
+    showUserConsent();
   }
 }
 
-function renderUserConsent(){
+function saveDeviceData() {
+  incode.sendGeolocation({ token: session.token });
+  incode.sendFingerprint({ token: session.token });
+}
+
+function showUserConsent(){
   incode.renderUserConsent(container, {
     session: session,
-    onSuccess: renderFrontIDCamera,
+    onSuccess: captureIdFrontSide,
   });
 }
 
-function renderFrontIDCamera() {
-  
-  // Optional but valuable for fraud prevention, hurts conversion
-  // incode.sendFingerprint(session);
-  // incode.sendGeolocation(session);
-  
+function captureIdFrontSide() {
   incode.renderCamera("front", container, {
-    onSuccess: renderBackIDCamera,
+    onSuccess: captureIdBackSide,
     onError: showError,
     token: session,
     numberOfTries: -1,
@@ -65,7 +51,7 @@ function renderFrontIDCamera() {
   });
 }
 
-function renderBackIDCamera() {
+function captureIdBackSide() {
   incode.renderCamera("back", container, {
     onSuccess: processID,
     onError: showError,
@@ -80,14 +66,12 @@ async function  processID() {
     token: session.token,
   });
   console.log("processId results", results);
-  renderSelfieCamera();
+  captureSelfie();
 }
 
-
-
-function renderSelfieCamera() {
+function captureSelfie() {
   incode.renderCamera("selfie", container, {
-    onSuccess: processFace,
+    onSuccess: finishOnboarding,
     onError: showError,
     token: session,
     numberOfTries: -1,
@@ -95,19 +79,14 @@ function renderSelfieCamera() {
   });
 }
 
-async function  processFace() {
-  const results = await incode.processFace({
-    token: session.token,
-  });
-  console.log("processFace results", results);
-  finish();
-}
-
-function finish() {
+function finishOnboarding() {
   // Finishing the session works along with the configuration in the flow
   // webhooks and business rules are ran here.
-  const response = incode.getFinishStatus(import.meta.env.VITE_FLOW_ID, session);
-  
+  const response = finishOnboardingSession(session.token);
+  showFinishScreen();
+}
+
+function showFinishScreen(){
   const container = document.getElementById("finish-container");
   container.innerHTML = "<h1>Finished</h1>";
 }
